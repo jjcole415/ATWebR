@@ -16,3 +16,5 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Imports: 
     magrittr
+URL: https://github.com/jjcole415/ATWebR
+BugReports: https://github.com/jjcole415/ATWebR/issues
