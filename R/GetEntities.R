@@ -7,15 +7,17 @@
 #' @param username  Username for the API
 #' @param password  Password for the API
 #' @param enterpriseID  Enterprise ID
+#' @import tidyverse
+#' @import DBI
 #' @export
 GetEntities <- function(username, password, enterpriseID){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
   call <- ATWeb_Auth(username = username, password = password)
-  UserID = stringr::str_extract(content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
-  SessionID = stringr::str_extract(content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
+  UserID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
+  SessionID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
   UTC_time <-as.POSIXlt(Sys.time(), format = "%Y-%m-%d%H:%M:%S", tz = "UTC")
-  created <- UTC_time %>% as.character() %>% str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
-  ended <- (UTC_time + 600) %>% as.character() %>% str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
+  created <- UTC_time %>% as.character() %>% stringr::str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
+  ended <- (UTC_time + 600) %>% as.character() %>% stringr::str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
 
     GetEntities_body <- glue(
     '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
@@ -43,54 +45,55 @@ GetEntities <- function(username, password, enterpriseID){
         		</GetEntitiesList>
         	</s:Body>
         </s:Envelope>') %>%
-    read_xml()
+    xml2::read_xml()
 
   tmp_call <- tempfile(fileext = ".xml")
-  write_xml(GetEntities_body, tmp_call, options = "format")
+  xml2::write_xml(GetEntities_body, tmp_call, options = "format")
 
-  Entities <- POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
-                   body = upload_file(tmp_call),
-                   content_type('application/soap+xml; charset=utf-8'),
-                   add_headers(Expect = "100-continue"), verbose())
+  Entities <- httr::POST(glue::glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
+                   body = httr::upload_file(tmp_call),
+                   httr::content_type('application/soap+xml; charset=utf-8'),
+                   httr::add_headers(Expect = "100-continue"),
+                   httr::verbose())
 
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
   file.remove(tmp_call)
 
   entities_result <- Entities$content %>%
-    read_xml() %>% as_list()
+    xml2::read_xml() %>% xml2::as_list()
   entities_list <- entities_result$Envelope$Body$GetEntitiesListResponse$GetEntitiesListResult$Entities
-  entities_df <- tibble(entities = entities_list) %>%
-    unnest_wider(entities) %>%
-    unnest_longer(CashManagement) %>%
-    unnest_longer(DatePerformanceLocked) %>%
-    unnest_longer(EntityAccountingPeriodFrequency) %>%
-    unnest_longer(EntityAccrualMethod) %>%
-    unnest_longer(EntityAccrueFees) %>%
-    unnest_longer(EntityCurrency) %>%
-    unnest_longer(EntityDisparityMethod) %>%
-    unnest_longer(EntityFiscalYearEnd) %>%
-    unnest_longer(EntityGainAllocationFrequency) %>%
-    unnest_longer(EntityGainAllocationHandling) %>%
-    unnest_longer(EntityGainAllocationMethod) %>%
-    unnest_longer(EntityID) %>%
-    unnest_longer(EntityIncomeAllocationFrequency ) %>%
-    unnest_longer(EntityIncomeAllocationMethod    ) %>%
-    unnest_longer(EntityNAV) %>%
-    unnest_longer(EntityName) %>%
-    unnest_longer(EntityTaxID) %>%
-    unnest_longer(EntityUnits) %>%
-    unnest_longer(ExcludeFromDisplay) %>%
-    unnest_longer(ForExGainGLAccount) %>%
-    unnest_longer(HarvestLosses) %>%
-    unnest_longer(IncludeToSideAuthorizers) %>%
-    unnest_longer(InterCompanyGLAccount) %>%
-    unnest_longer(LastClosedAccountingPeriod) %>%
-    unnest_longer(OpenAccountingPeriod) %>%
-    unnest_longer(TaxLossCarryForward) %>%
-    unnest_longer(XfileOffsetGLAccount) %>%
-    unnest_longer(EntityDateStarted) %>%
-    select(-EntityClasses) %>%
-    type_convert()
+  entities_df <- tidyr::tibble(entities = entities_list) %>%
+    tidyr::unnest_wider(entities) %>%
+    tidyr::unnest_longer(CashManagement) %>%
+    tidyr::unnest_longer(DatePerformanceLocked) %>%
+    tidyr::unnest_longer(EntityAccountingPeriodFrequency) %>%
+    tidyr::unnest_longer(EntityAccrualMethod) %>%
+    tidyr::unnest_longer(EntityAccrueFees) %>%
+    tidyr::unnest_longer(EntityCurrency) %>%
+    tidyr::unnest_longer(EntityDisparityMethod) %>%
+    tidyr::unnest_longer(EntityFiscalYearEnd) %>%
+    tidyr::unnest_longer(EntityGainAllocationFrequency) %>%
+    tidyr::unnest_longer(EntityGainAllocationHandling) %>%
+    tidyr::unnest_longer(EntityGainAllocationMethod) %>%
+    tidyr::unnest_longer(EntityID) %>%
+    tidyr::unnest_longer(EntityIncomeAllocationFrequency ) %>%
+    tidyr::unnest_longer(EntityIncomeAllocationMethod    ) %>%
+    tidyr::unnest_longer(EntityNAV) %>%
+    tidyr::unnest_longer(EntityName) %>%
+    tidyr::unnest_longer(EntityTaxID) %>%
+    tidyr::unnest_longer(EntityUnits) %>%
+    tidyr::unnest_longer(ExcludeFromDisplay) %>%
+    tidyr::unnest_longer(ForExGainGLAccount) %>%
+    tidyr::unnest_longer(HarvestLosses) %>%
+    tidyr::unnest_longer(IncludeToSideAuthorizers) %>%
+    tidyr::unnest_longer(InterCompanyGLAccount) %>%
+    tidyr::unnest_longer(LastClosedAccountingPeriod) %>%
+    tidyr::unnest_longer(OpenAccountingPeriod) %>%
+    tidyr::unnest_longer(TaxLossCarryForward) %>%
+    tidyr::unnest_longer(XfileOffsetGLAccount) %>%
+    tidyr::unnest_longer(EntityDateStarted) %>%
+    dplyr::select(-EntityClasses) %>%
+    readr::type_convert()
 
   return(entities_df)
 }
@@ -107,8 +110,8 @@ GetEntities <- function(username, password, enterpriseID){
 GetEntityClasses <- function(username, password, enterpriseID){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
   call <- ATWeb_Auth(username = username, password = password)
-  UserID = stringr::str_extract(content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
-  SessionID = stringr::str_extract(content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
+  UserID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
+  SessionID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
   UTC_time <-as.POSIXlt(Sys.time(), format = "%Y-%m-%d%H:%M:%S", tz = "UTC")
   created <- UTC_time %>% as.character() %>% stringr::str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
   ended <- (UTC_time + 600) %>% as.character() %>% str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")

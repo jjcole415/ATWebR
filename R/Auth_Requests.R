@@ -9,6 +9,8 @@
 #' @param password  Password for the API
 #' @import magrittr
 #' @import glue
+#' @import tidyverse
+#' @import httr
 #' @export
 ATWeb_Auth <- function(username, password) {
   usethis::use_pipe()
@@ -35,9 +37,9 @@ ATWeb_Auth <- function(username, password) {
   xml2::write_xml(auth_request, tmp_auth, options = "format")
 
   call <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
-               body = upload_file(tmp_auth),
-               content_type('application/soap+xml; charset=utf-8'),
-               verbose())
+               body = httr::upload_file(tmp_auth),
+               httr::content_type('application/soap+xml; charset=utf-8'),
+               httr::verbose())
   file.remove(tmp_auth)
   return(call)
 }
@@ -76,9 +78,9 @@ ATWeb_Logout <- function(username, password, SessionID){
   xml2::write_xml(logout_body, tmp_logout, options = "format")
 
   call <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
-               body = upload_file(tmp_logout),
-               content_type('application/soap+xml; charset=utf-8'),
-               verbose())
+               body = httr::upload_file(tmp_logout),
+               httr::content_type('application/soap+xml; charset=utf-8'),
+               httr::verbose())
   file.remove(tmp_logout)
   return(call)
 }
