@@ -13,7 +13,6 @@
 #' @import httr
 #' @export
 ATWeb_Auth <- function(username, password) {
-  usethis::use_pipe()
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
   auth_request <- glue::glue(
     '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
