@@ -177,6 +177,7 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
 #' @import xml2
 #' @import stringr
 #' @import dplyr
+#' @import readr
 #' @export
 GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, StartDate, EndDate){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
@@ -222,7 +223,7 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
     read_xml()
 
   tmp_call <- tempfile(fileext = ".xml")
-  write_xml(GetPositions_body, tmp_call, options = "format")
+  xml2::write_xml(GetPositions_body, tmp_call, options = "format")
   Positions <- POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
                     body = upload_file(tmp_call),
                     content_type('application/soap+xml; charset=utf-8'),
@@ -271,7 +272,7 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
     unnest_longer(UnitaryTaxBasis) %>%
     unnest_longer(UnrealizedGains) %>%
     select(-`...1`) %>%
-    type_convert() %>%
+    readr::type_convert() %>%
     dplyr::mutate(StartDate = as_date(StartDate), EndDate = as_date(EndDate), UploadDate = Sys.Date())
 
 
