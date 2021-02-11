@@ -144,9 +144,9 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
                    PWD = "I5S27xswNBq5",
                    Port = 1433)
 
-  securities_df <- dplyr::tbl(con, "Securities") %>% dplyr::collect()
-  entities_df <- dplyr::tbl(con, "Entities") %>% dplyr::select(EntityID, EntityName) %>% dplyr::collect()
-  portfolios_df <- dplyr::tbl(con, "Portfolios") %>% dplyr::select(EntityID, PortfolioID, PortfolioName) %>% dplyr::collect()
+  securities_df <- GetSecuritiesList(username, password, enterpriseID) %>% dplyr::collect()
+  entities_df <- GetEntities(username, password, enterpriseID) %>% dplyr::select(EntityID, EntityName)
+  portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName) %>% dplyr::collect()
 
   DBI::dbDisconnect(con)
 
