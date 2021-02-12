@@ -170,6 +170,7 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
 #' @import stringr
 #' @import dplyr
 #' @import readr
+#' @import purrr
 #' @export
 GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, StartDate, EndDate){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
@@ -184,7 +185,7 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
                          no = glue('<entityIDs>
                                       <entityID value = "{EntityID}"/>
                                    </entityIDs>'))
-  GetPositions_body <- glue(
+  GetPositions_body <- glue::glue(
     '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
             <s:Header>
             	<a:Action s:mustUnderstand="1">http://www.atweb.us/ATWebAPI/IATWebWSAPI/GetPositions</a:Action>
@@ -216,10 +217,10 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
 
   tmp_call <- tempfile(fileext = ".xml")
   xml2::write_xml(GetPositions_body, tmp_call, options = "format")
-  Positions <- POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
-                    body = upload_file(tmp_call),
-                    content_type('application/soap+xml; charset=utf-8'),
-                    add_headers(Expect = "100-continue"), verbose())
+  Positions <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
+                    body = httr::upload_file(tmp_call),
+                    httr::content_type('application/soap+xml; charset=utf-8'),
+                    httr::add_headers(Expect = "100-continue"), httr::verbose())
 
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
   file.remove(tmp_call)
