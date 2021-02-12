@@ -141,7 +141,6 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
   entities_df <- GetEntities(username, password, enterpriseID) %>% dplyr::select(EntityID, EntityName)
   portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName)
 
-  DBI::dbDisconnect(con)
 
   positions_df <- dplyr::left_join(portfolio_data_cells, security_data_cells) %>%
     dplyr::left_join(securities_df) %>%
