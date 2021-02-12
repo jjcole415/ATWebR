@@ -182,8 +182,8 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
   ended <- (UTC_time + 600) %>% as.character() %>% str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
   param_entity <- ifelse(EntityID == 0,
                          yes = glue('<entityIDs i:nil="true" xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"/>'),
-                         no = glue('<entityIDs>
-                                      <entityID value = "{EntityID}"/>
+                         no = glue('<entityIDs i:nil="false" xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+                                      <b:int>{EntityID}</b:int>>
                                    </entityIDs>'))
   GetPositions_body <- glue::glue(
     '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
