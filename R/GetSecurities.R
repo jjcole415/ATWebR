@@ -62,26 +62,26 @@ GetSecuritiesList <- function(username, password, enterpriseID){
     read_xml()
 
   (securities_data <- doc %>%
-      xml_find_all('//b:Securities/b:GetSecuritiesListSecurity', ns = xml_ns(doc)) %>%
-      map(~ xml_children(.x)))
+      xml2::xml_find_all('//b:Securities/b:GetSecuritiesListSecurity', ns = xml2::xml_ns(doc)) %>%
+      purrr::map(~ xml2::xml_children(.x)))
 
   (security_data_rows <- tibble(
     row = seq_along(securities_data),
     security_nodeset = securities_data,
     securityID_nodeset = securities_data %>%
-      map(~ xml_children(.x)) %>%
-      map(~ xml_children(.x))
+      purrr::map(~ xml2::xml_children(.x)) %>%
+      purrr::map(~ xml2::xml_children(.x))
   ))
 
   (security_data_cells <- security_data_rows %>%
-      mutate(sec_cols = security_nodeset %>% map(~ xml_name(.)),
-             sec_vals = security_nodeset %>% map(~ xml_text(.)),
-             sec_i = security_nodeset %>% map(~ seq_along(.))
+      mutate(sec_cols = security_nodeset %>% purrr::map(~ xml2::xml_name(.)),
+             sec_vals = security_nodeset %>% purrr::map(~ xml2::xml_text(.)),
+             sec_i = security_nodeset %>% purrr::map(~ seq_along(.))
       ) %>%
-      select(row, sec_cols, sec_vals, sec_i) %>%
-      unnest(cols = c(sec_cols, sec_vals, sec_i)) %>%
-      pivot_wider(names_from = sec_cols, values_from = sec_vals, id_cols = c(row)) %>%
-      type_convert()
+      dplyr::select(row, sec_cols, sec_vals, sec_i) %>%
+      tidyr::unnest(cols = c(sec_cols, sec_vals, sec_i)) %>%
+      tidyr::pivot_wider(names_from = sec_cols, values_from = sec_vals, id_cols = c(row)) %>%
+      readr::type_convert()
   )
 
   (securityID_data_cells <- security_data_rows %>%
