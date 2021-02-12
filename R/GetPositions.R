@@ -136,17 +136,9 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
       readr::type_convert()
   )
 
-  con <- DBI::dbConnect(odbc::odbc(),
-                   Driver = "ODBC Driver 17 for SQL Server",
-                   Server = "tcp:perrformance.database.windows.net",
-                   Database = "Clearlake",
-                   UID = "jjcole",
-                   PWD = "I5S27xswNBq5",
-                   Port = 1433)
-
-  securities_df <- GetSecuritiesList(username, password, enterpriseID) %>% dplyr::collect()
+  securities_df <- GetSecuritiesList(username, password, enterpriseID)
   entities_df <- GetEntities(username, password, enterpriseID) %>% dplyr::select(EntityID, EntityName)
-  portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName) %>% dplyr::collect()
+  portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName)
 
   DBI::dbDisconnect(con)
 
@@ -237,41 +229,41 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
   positions_raw <- positions_result$Envelope$Body$GetPositionsResponse$GetPositionsResult$Entities
 
   positions_df <- dplyr::tibble(position = positions_raw) %>%
-    unnest_wider(position) %>%
-    unnest_longer(EntityID) %>%
-    unnest_longer(Portfolios) %>%
-    unnest_wider(Portfolios) %>%
-    unnest_longer(Securities) %>%
-    unnest_wider(Securities) %>%
-    unnest_longer(BeginningCash) %>%
-    unnest_longer(BeginningDueFrom) %>%
-    unnest_longer(BeginningDueTo) %>%
-    unnest_longer(BeginningInvestments) %>%
-    unnest_longer(BeginningNestedCost) %>%
-    unnest_longer(BeginningNestedDisparity) %>%
-    unnest_longer(EndingCash) %>%
-    unnest_longer(EndingDueFrom) %>%
-    unnest_longer(EndingDueTo) %>%
-    unnest_longer(EndingInvestments) %>%
-    unnest_longer(EndingNestedCost) %>%
-    unnest_longer(EndingNestedDisparity) %>%
-    unnest_longer(PortfolioID) %>%
-    unnest_longer(Quantity) %>%
-    unnest_longer(RealizedGainsLongTerm) %>%
-    unnest_longer(RealizedGainsShortTerm) %>%
-    unnest_longer(Currency) %>%
-    unnest_longer(Dividends) %>%
-    unnest_longer(EndingExchangeRate) %>%
-    unnest_longer(Interest) %>%
-    unnest_longer(OutstandingDividends) %>%
-    unnest_longer(OutstandingInterest) %>%
-    unnest_longer(SecurityID) %>%
-    unnest_longer(SecurityPrimaryID) %>%
-    unnest_longer(UnitaryBookValue) %>%
-    unnest_longer(UnitaryCostBasis) %>%
-    unnest_longer(UnitaryTaxBasis) %>%
-    unnest_longer(UnrealizedGains) %>%
-    select(-`...1`) %>%
+    tidyr::unnest_wider(position) %>%
+    tidyr::unnest_longer(EntityID) %>%
+    tidyr::unnest_longer(Portfolios) %>%
+    tidyr::unnest_wider(Portfolios) %>%
+    tidyr::unnest_longer(Securities) %>%
+    tidyr::unnest_wider(Securities) %>%
+    tidyr::unnest_longer(BeginningCash) %>%
+    tidyr::unnest_longer(BeginningDueFrom) %>%
+    tidyr::unnest_longer(BeginningDueTo) %>%
+    tidyr::unnest_longer(BeginningInvestments) %>%
+    tidyr::unnest_longer(BeginningNestedCost) %>%
+    tidyr::unnest_longer(BeginningNestedDisparity) %>%
+    tidyr::unnest_longer(EndingCash) %>%
+    tidyr::unnest_longer(EndingDueFrom) %>%
+    tidyr::unnest_longer(EndingDueTo) %>%
+    tidyr::unnest_longer(EndingInvestments) %>%
+    tidyr::unnest_longer(EndingNestedCost) %>%
+    tidyr::unnest_longer(EndingNestedDisparity) %>%
+    tidyr::unnest_longer(PortfolioID) %>%
+    tidyr::unnest_longer(Quantity) %>%
+    tidyr::unnest_longer(RealizedGainsLongTerm) %>%
+    tidyr::unnest_longer(RealizedGainsShortTerm) %>%
+    tidyr::unnest_longer(Currency) %>%
+    tidyr::unnest_longer(Dividends) %>%
+    tidyr::unnest_longer(EndingExchangeRate) %>%
+    tidyr::unnest_longer(Interest) %>%
+    tidyr::unnest_longer(OutstandingDividends) %>%
+    tidyr::unnest_longer(OutstandingInterest) %>%
+    tidyr::unnest_longer(SecurityID) %>%
+    tidyr::unnest_longer(SecurityPrimaryID) %>%
+    tidyr::unnest_longer(UnitaryBookValue) %>%
+    tidyr::unnest_longer(UnitaryCostBasis) %>%
+    tidyr::unnest_longer(UnitaryTaxBasis) %>%
+    tidyr::unnest_longer(UnrealizedGains) %>%
+    dplyr::select(-`...1`) %>%
     readr::type_convert() %>%
     dplyr::mutate(StartDate = as_date(StartDate), EndDate = as_date(EndDate), UploadDate = Sys.Date())
 
