@@ -9,6 +9,7 @@
 #' @param enterpriseID  Enterprise ID
 #' @import tidyverse
 #' @import DBI
+#' @import purrr
 #' @export
 GetSecuritiesList <- function(username, password, enterpriseID){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
