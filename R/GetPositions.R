@@ -137,15 +137,15 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
       readr::type_convert()
   )
 
-  securities_df <- GetSecuritiesList(username, password, enterpriseID)
-  entities_df <- GetEntities(username, password, enterpriseID) %>% dplyr::select(EntityID, EntityName)
-  portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName)
-
+  # securities_df <- GetSecuritiesList(username, password, enterpriseID)
+  # entities_df <- GetEntities(username, password, enterpriseID) %>% dplyr::select(EntityID, EntityName)
+  # portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName)
+  #
 
   positions_df <- dplyr::left_join(portfolio_data_cells, security_data_cells) %>%
-    dplyr::left_join(securities_df) %>%
-    dplyr::left_join(portfolios_df) %>%
-    dplyr::left_join(entities_df) %>%
+    # dplyr::left_join(securities_df) %>%
+    # dplyr::left_join(portfolios_df) %>%
+    # dplyr::left_join(entities_df) %>%
     dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date()) %>%
     dplyr::select(-row)
 
