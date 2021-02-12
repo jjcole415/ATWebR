@@ -13,6 +13,7 @@
 #' @import DBI
 #' @import xml2
 #' @import dplyr
+#' @import purrr
 #' @export
 GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
