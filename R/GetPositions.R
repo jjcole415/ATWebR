@@ -267,7 +267,7 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
     tidyr::unnest_longer(UnrealizedGains) %>%
     dplyr::select(-`...1`) %>%
     readr::type_convert() %>%
-    dplyr::mutate(StartDate = as_date(StartDate), EndDate = as_date(EndDate), UploadDate = Sys.Date())
+    dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
 
 
   return(positions_df)
