@@ -88,7 +88,20 @@ GetSecurityValues <- function(username, password, enterpriseID, StartDate = "190
       unnest(cols = c(PriceDate, PricePortfolioID, SecurityAnnualizedPayment, SecurityOutstandingShares,
                       SecurityTradingVolume, SecurityValue1, SecurityValue2, SecurityValue3,
                       SecurityValueNotes)) %>%
-      readr::type_convert()
+      readr::type_convert(col_types = cols(
+        SecurityID = col_double(),
+        SecurityPrimaryID = col_character(),
+        PriceDate = col_datetime(format = ""),
+        PricePortfolioID = col_double(),
+        SecurityAnnualizedPayment = col_double(),
+        SecurityOutstandingShares = col_double(),
+        SecurityTradingVolume = col_double(),
+        SecurityValue1 = col_double(),
+        SecurityValue2 = col_double(),
+        SecurityValue3 = col_double(),
+        SecurityValueNotes = col_character()
+      )) %>%
+      replace_na(list(PricePortfolioID = 0, SecurityValue2 = 0, SecurityValue3 = 0, SecurityValueNotes = ""))
   )
 
 
