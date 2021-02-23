@@ -16,6 +16,7 @@
 #' @export
 
 GetInvestorBalances <- function(username, password, enterpriseID, StartDate, EndDate){
+  base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
   call <- ATWeb_Auth(username = username, password = password)
   UserID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
   SessionID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
