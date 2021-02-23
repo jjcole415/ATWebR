@@ -2,8 +2,8 @@
 
 GetInvestorBalances <- function(username, password, enterpriseID, StartDate, EndDate){
   call <- ATWeb_Auth(username = username, password = password)
-  UserID = stringr::str_extract(content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
-  SessionID = stringr::str_extract(content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
+  UserID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
+  SessionID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
 
   UTC_time <-as.POSIXlt(Sys.time(), format = "%Y-%m-%d%H:%M:%S", tz = "UTC")
   created <- UTC_time %>% as.character() %>% str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
@@ -41,10 +41,10 @@ GetInvestorBalances <- function(username, password, enterpriseID, StartDate, End
 
   tmp_call <- tempfile(fileext = ".xml")
   write_xml(getInvBal, tmp_call, options = "format")
-  InvestorBalances <- POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
-                           body = upload_file(tmp_call),
-                           content_type('application/soap+xml; charset=utf-8'),
-                           add_headers(Expect = "100-continue"), verbose())
+  InvestorBalances <- httr::POST(glue::glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
+                           body = httr::upload_file(tmp_call),
+                           httr::content_type('application/soap+xml; charset=utf-8'),
+                           httr::add_headers(Expect = "100-continue"), httr::verbose())
 
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
   file.remove(tmp_call)
@@ -52,41 +52,49 @@ GetInvestorBalances <- function(username, password, enterpriseID, StartDate, End
   ############################################################################
 
   doc <- InvestorBalances$content %>%
-    read_xml()
+    xml2::read_xml()
 
   (InvBal_data <- doc %>%
-      xml_find_all('.//b:Investor', ns = xml_ns(doc)))
+      xml2::xml_find_all('.//b:Investor', ns = xml2::xml_ns(doc)))
 
   (InvBal_rows <- tibble(
     row = seq_along(InvBal_data),
-    Entity_nodeset = InvBal_data %>% map(~ xml_find_all(.x, './b:EntityID', ns = xml_ns(doc))),
-    InvestorBalances_nodeset = InvBal_data %>% map(~ xml_find_all(.x, './b:InvestorBalances/b:InvestorBalance', ns = xml_ns(doc))) %>% map(~ xml_children(.x))  )
-  )
-
-  (Entity_df <- InvBal_rows %>%
-      mutate(EntityID = Entity_nodeset %>% map(~ xml_text(.x))
-      ) %>%
-      unnest(cols = c(EntityID)) %>%
-      type_convert() %>% select(row, EntityID)
+    EntityID = InvBal_data %>%  map(~ xml2::xml_find_all(.x, './/b:EntityID', ns = xml2::xml_ns(doc))) %>% map(~ xml_text(.x)),
+    InvestorBalance = InvBal_data %>%  map(~ xml2::xml_find_all(.x, './/b:InvestorBalance', ns = xml2::xml_ns(doc))) %>% map(~ xml_children(.x)))
   )
 
   (InvBal_df <- InvBal_rows %>%
-      mutate(cols = InvestorBalances_nodeset %>% map(~xml_name(.x)),
-             vals = InvestorBalances_nodeset %>% map(~xml_text(.x))
+      dplyr::mutate(cols = InvestorBalance %>% purrr::map(~ xml2::xml_name(.)),
+                    vals = InvestorBalance %>% purrr::map(~ xml2::xml_text(.)),
+                    i = InvestorBalance %>% purrr::map(~ seq_along(.))
       ) %>%
-      select(row, cols, vals) %>%
-      unnest(cols = c(cols, vals)) %>%
-      pivot_wider(names_from = cols, values_from = vals, id_cols = c(row)) %>%
-      unnest(cols = c(InvestorAssociatedID, InvestorAssociatedIDType, InvestorBookAccount,
+      dplyr::select(row, EntityID, cols, vals, i) %>%
+      tidyr::unnest(cols = c(EntityID, cols, vals, i)) %>%
+      tidyr::pivot_wider(names_from = cols, values_from = vals, id_cols = c(EntityID)) %>%
+      unnest(cols = c(EntityID, InvestorAssociatedID, InvestorAssociatedIDType, InvestorBookAccount,
                       InvestorDisparityAccount, InvestorEquityAccountName, InvestorEquityAccountNumber,
                       InvestorNav, InvestorOwnershipPercent, InvestorTaxAccount,
                       InvestorUnits, ManagementFeesAccrued, ManagementFeesCharged,
                       PerformanceFeesAccrued, PerformanceFeesCharged)) %>%
-      type_convert() %>%
-      left_join(Entity_df)
+      readr::type_convert(cols(
+        EntityID = col_double(),
+        InvestorAssociatedID = col_double(),
+        InvestorAssociatedIDType = col_character(),
+        InvestorBookAccount = col_double(),
+        InvestorDisparityAccount = col_double(),
+        InvestorEquityAccountName = col_character(),
+        InvestorEquityAccountNumber = col_double(),
+        InvestorNav = col_double(),
+        InvestorOwnershipPercent = col_double(),
+        InvestorTaxAccount = col_double(),
+        InvestorUnits = col_double(),
+        ManagementFeesAccrued = col_double(),
+        ManagementFeesCharged = col_double(),
+        PerformanceFeesAccrued = col_double(),
+        PerformanceFeesCharged = col_double()
+      )) %>%
+      replace_na(list())
   )
-
-
 
   return(InvBal_df)
 
