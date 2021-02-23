@@ -1,5 +1,20 @@
 # GetInvestorBalances ------------------------------------------------------------------------------
 
+#' GetInvestorBalances API Call
+#'
+#' This function queries the Archway API for equity account balances from the GL for a given period
+#'
+#' @param username  Username for the API
+#' @param password  Password for the API
+#' @param enterpriseID  Enterprise ID
+#' @param StartDate  Date for beginning of period in yyyy-mm-dd format
+#' @param EndDate  Date for end of period in yyyy-mm-dd format
+#' @import tidyverse
+#' @import DBI
+#' @import xml2
+#' @import dplyr
+#' @export
+
 GetInvestorBalances <- function(username, password, enterpriseID, StartDate, EndDate){
   call <- ATWeb_Auth(username = username, password = password)
   UserID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
