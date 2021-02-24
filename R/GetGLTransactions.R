@@ -134,7 +134,8 @@ GetGLTransactions <- function(username, password, enterpriseID, StartDate, EndDa
     tidyr::unnest(cols = c(GLAccountCode, GLAccountName, GLCOAID, GLCreditAmount, GLCurrency,
                     GLDebitAmount, GLExchangeRate, GLFunctionCode, GLNotes, GLPortfolioID,
                     GLReconciled, GLRowID, GLSecurityID, GLTransactionCodeBlocks)) %>%
-    dplyr::select(-GLTransactionRows, -GLTransactionCodeBlocks)
+    dplyr::select(-GLTransactionRows, -GLTransactionCodeBlocks) %>%
+    dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
 
   GLData_df %>%
     dplyr::select(row, GLID, GLJournalDate) %>%

@@ -101,7 +101,8 @@ GetSecurityValues <- function(username, password, enterpriseID, StartDate = "190
         SecurityValue3 = col_double(),
         SecurityValueNotes = col_character()
       )) %>%
-      replace_na(list(PricePortfolioID = 0, SecurityValue2 = 0, SecurityValue3 = 0, SecurityValueNotes = ""))
+      replace_na(list(PricePortfolioID = 0, SecurityValue2 = 0, SecurityValue3 = 0, SecurityValueNotes = "")) %>%
+      dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
   )
 
 

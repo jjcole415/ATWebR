@@ -109,7 +109,8 @@ GetInvestorBalances <- function(username, password, enterpriseID, StartDate, End
         PerformanceFeesAccrued = col_double(),
         PerformanceFeesCharged = col_double()
       )) %>%
-      replace_na(list())
+      replace_na(list()) %>%
+      dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
   )
 
   return(InvBal_df)
