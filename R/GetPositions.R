@@ -18,7 +18,7 @@
 GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
   call <- ATWeb_Auth(username = username, password = password)
-  if(status_code(call) == 200) print("success")
+  if(httr::status_code(call) == 200) print("success")
   UserID = stringr::str_extract(content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
   SessionID = stringr::str_extract(content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
   UTC_time <-as.POSIXlt(Sys.time(), format = "%Y-%m-%d%H:%M:%S", tz = "UTC")
@@ -73,6 +73,44 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
   # (portfolio_data <- doc %>%
   #     xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio', ns = xml_ns(doc)) %>%
   #     map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))))
+
+  #######################################
+  (positions_data <- doc %>%
+     xml2::xml_find_all('.//b:GetPositionPortfolio', ns = xml2::xml_ns(doc)))
+
+  (positions_rows <- tibble(
+    row = seq_along(positions_data),
+    PortfolioID = map(.x = positions_data, ~ xml2::xml_find_all(.x, './/b:PortfolioID')) %>% map(~ xml_text(.x)),
+    Securities = map(.x = positions_data, ~ xml2::xml_find_all(.x, './/b:Securities'))
+    ) %>%
+      unnest(PortfolioID) %>%
+      mutate(GetPositionSecurity = map(.x = Securities, ~ xml2::xml_find_all(.x, './b:GetPositionSecurity'))) %>%
+      mutate(Currency = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Currency')) %>% map(~ xml_text(.x)),
+             Dividends = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Dividends')) %>% map(~ xml_text(.x)),
+             EndingExchangeRate = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:EndingExchangeRate')) %>% map(~ xml_text(.x)),
+             Interest = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Interest')) %>% map(~ xml_text(.x)),
+             OutstandingDividends = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:OutstandingDividends')) %>% map(~ xml_text(.x)),
+             OutstandingInterest = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:OutstandingInterest')) %>% map(~ xml_text(.x)),
+             Quantity = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Quantity')) %>% map(~ xml_text(.x)),
+             SecurityID = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:SecurityID')) %>% map(~ xml_text(.x)),
+             SecurityPrimaryID = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:SecurityPrimaryID')) %>% map(~ xml_text(.x)),
+             UnitaryBookValue = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnitaryBookValue')) %>% map(~ xml_text(.x)),
+             UnitaryCostBasis = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnitaryCostBasis')) %>% map(~ xml_text(.x)),
+             UnitaryTaxBasis = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnitaryTaxBasis')) %>% map(~ xml_text(.x)),
+             UnrealizedGains = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnrealizedGains')) %>% map(~ xml_text(.x))
+               ) %>%
+      select(-Securities, -GetPositionSecurity) %>%
+      unnest(cols = c(Currency, Dividends, EndingExchangeRate,
+                      Interest, OutstandingDividends, OutstandingInterest, Quantity,
+                      SecurityID, SecurityPrimaryID, UnitaryBookValue, UnitaryCostBasis,
+                      UnitaryTaxBasis, UnrealizedGains))
+  )
+
+  positions_df <- positions_rows %>%
+    dplyr::select(-row) %>%
+    dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
+  #######################################
+
 
   (portfolio_data <- doc %>%
       xml2::xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio', ns = xml2::xml_ns(doc)) %>%

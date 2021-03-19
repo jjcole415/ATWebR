@@ -66,7 +66,7 @@ ATWeb_Logout <- function(username, password, SessionID){
             </s:Header>
             <s:Body>
                       <Logout xmlns="http://tempuri.org/">
-                                      <SessionID>{SessionID}</SessionID>
+                                      <token>{SessionID}</token>
                       </Logout>
             </s:Body>
   </s:Envelope>') %>%
