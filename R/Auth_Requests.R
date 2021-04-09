@@ -55,7 +55,7 @@ ATWeb_Auth <- function(username, password) {
 #' @export
 ATWeb_Logout <- function(username, password, SessionID){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
-  logout_body <- glue(
+  logout_body <- glue::glue(
     '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
             <s:Header>
                     <a:Action s:mustUnderstand="1">http://tempuri.org/IATWebWSAuth/Logout</a:Action>

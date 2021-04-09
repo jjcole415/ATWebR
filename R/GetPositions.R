@@ -70,9 +70,6 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
   doc <- Positions$content %>%
     xml2::read_xml()
 
-  # (portfolio_data <- doc %>%
-  #     xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio', ns = xml_ns(doc)) %>%
-  #     map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))))
 
   #######################################
   (positions_data <- doc %>%
@@ -111,81 +108,81 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
     dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
   #######################################
 
-
-  (portfolio_data <- doc %>%
-      xml2::xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio', ns = xml2::xml_ns(doc)) %>%
-      purrr::map(~ xml2::xml_children(.x)))
-
-  # (security_data <- doc %>%
-  #     xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio/b:Securities', ns = xml_ns(doc)) %>%
-  #     map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))))
-
-  (security_data <- doc %>%
-      xml2::xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio/b:Securities', ns = xml2::xml_ns(doc)) %>%
-      purrr::map(~ xml2::xml_children(.x)))
-
-  (portfolio_data_rows <- tidyr::tibble(
-    row = seq_along(portfolio_data),
-    portfolio_nodeset = portfolio_data,
-    security_nodeset = security_data
-  ))
-
-  (portfolio_data_cells <- portfolio_data_rows %>%
-      dplyr::mutate(port_cols = portfolio_nodeset %>% purrr::map(~ xml2::xml_name(.)),
-             port_vals = portfolio_nodeset %>% purrr::map(~ xml2::xml_text(.)),
-             port_i = portfolio_nodeset %>% purrr::map(~ seq_along(.))
-      ) %>%
-      dplyr::select(row, port_cols, port_vals, port_i) %>%
-      tidyr::unnest(cols = c(port_cols, port_vals, port_i)) %>%
-      tidyr::pivot_wider(names_from = port_cols, values_from = port_vals, id_cols = c(row)) %>%
-      readr::type_convert() %>%
-      dplyr::select(-Securities)
-  )
-
-
-  (security_data_rows <- dplyr::tibble(
-    row = seq_along(security_data),
-    security_nodeset = security_data))
-
-  # (security_data_cells <- security_data_rows %>%
-  #     mutate(sec_cols = security_nodeset %>% map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))) %>% map(~ xml_name(.)),
-  #            sec_vals = security_nodeset %>% map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))) %>% map(~ xml_text(.)),
-  #            sec_i = security_nodeset %>% map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))) %>% map(~ seq_along(.))
-  #     ) %>%
-  #     select(row, sec_cols, sec_vals, sec_i) %>%
-  #     unnest(cols = c(sec_cols, sec_vals, sec_i)) %>%
-  #     pivot_wider(names_from = sec_cols, values_from = sec_vals, id_cols = c(row)) %>%
-  #     unnest(cols = c(Currency, Dividends, EndingExchangeRate, Interest, OutstandingDividends,
-  #                     OutstandingInterest, Quantity, SecurityID, SecurityPrimaryID,
-  #                     UnitaryBookValue, UnitaryCostBasis, UnitaryTaxBasis, UnrealizedGains)) %>%
-  #     type_convert()
-  # )
-
-  (security_data_cells <- security_data_rows %>%
-      dplyr::mutate(sec_cols = security_nodeset %>% purrr::map(~ xml2::xml_children(.x)) %>% purrr::map(~ xml2::xml_name(.)),
-             sec_vals = security_nodeset %>% purrr::map(~ xml2::xml_children(.x)) %>% purrr::map(~ xml2::xml_text(.)),
-             sec_i = security_nodeset %>% purrr::map(~ xml2::xml_children(.x)) %>% purrr::map(~ seq_along(.))
-      ) %>%
-      dplyr::select(row, sec_cols, sec_vals, sec_i) %>%
-      tidyr::unnest(cols = c(sec_cols, sec_vals, sec_i)) %>%
-      tidyr::pivot_wider(names_from = sec_cols, values_from = sec_vals, id_cols = c(row)) %>%
-      tidyr::unnest(cols = c(Currency, Dividends, EndingExchangeRate, Interest, OutstandingDividends,
-                      OutstandingInterest, Quantity, SecurityID, SecurityPrimaryID,
-                      UnitaryBookValue, UnitaryCostBasis, UnitaryTaxBasis, UnrealizedGains)) %>%
-      readr::type_convert()
-  )
-
-  # securities_df <- GetSecuritiesList(username, password, enterpriseID)
-  # entities_df <- GetEntities(username, password, enterpriseID) %>% dplyr::select(EntityID, EntityName)
-  # portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName)
-  #
-
-  positions_df <- dplyr::left_join(portfolio_data_cells, security_data_cells) %>%
-    # dplyr::left_join(securities_df) %>%
-    # dplyr::left_join(portfolios_df) %>%
-    # dplyr::left_join(entities_df) %>%
-    dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date()) %>%
-    dplyr::select(-row)
+#
+#   (portfolio_data <- doc %>%
+#       xml2::xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio', ns = xml2::xml_ns(doc)) %>%
+#       purrr::map(~ xml2::xml_children(.x)))
+#
+#   # (security_data <- doc %>%
+#   #     xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio/b:Securities', ns = xml_ns(doc)) %>%
+#   #     map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))))
+#
+#   (security_data <- doc %>%
+#       xml2::xml_find_all('//b:Entities/b:GetPositionEntity/b:Portfolios/b:GetPositionPortfolio/b:Securities', ns = xml2::xml_ns(doc)) %>%
+#       purrr::map(~ xml2::xml_children(.x)))
+#
+#   (portfolio_data_rows <- tidyr::tibble(
+#     row = seq_along(portfolio_data),
+#     portfolio_nodeset = portfolio_data,
+#     security_nodeset = security_data
+#   ))
+#
+#   (portfolio_data_cells <- portfolio_data_rows %>%
+#       dplyr::mutate(port_cols = portfolio_nodeset %>% purrr::map(~ xml2::xml_name(.)),
+#              port_vals = portfolio_nodeset %>% purrr::map(~ xml2::xml_text(.)),
+#              port_i = portfolio_nodeset %>% purrr::map(~ seq_along(.))
+#       ) %>%
+#       dplyr::select(row, port_cols, port_vals, port_i) %>%
+#       tidyr::unnest(cols = c(port_cols, port_vals, port_i)) %>%
+#       tidyr::pivot_wider(names_from = port_cols, values_from = port_vals, id_cols = c(row)) %>%
+#       readr::type_convert() %>%
+#       dplyr::select(-Securities)
+#   )
+#
+#
+#   (security_data_rows <- dplyr::tibble(
+#     row = seq_along(security_data),
+#     security_nodeset = security_data))
+#
+#   # (security_data_cells <- security_data_rows %>%
+#   #     mutate(sec_cols = security_nodeset %>% map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))) %>% map(~ xml_name(.)),
+#   #            sec_vals = security_nodeset %>% map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))) %>% map(~ xml_text(.)),
+#   #            sec_i = security_nodeset %>% map(~ xml_find_all(.x, xpath = "./b:*", ns = xml_ns(doc))) %>% map(~ seq_along(.))
+#   #     ) %>%
+#   #     select(row, sec_cols, sec_vals, sec_i) %>%
+#   #     unnest(cols = c(sec_cols, sec_vals, sec_i)) %>%
+#   #     pivot_wider(names_from = sec_cols, values_from = sec_vals, id_cols = c(row)) %>%
+#   #     unnest(cols = c(Currency, Dividends, EndingExchangeRate, Interest, OutstandingDividends,
+#   #                     OutstandingInterest, Quantity, SecurityID, SecurityPrimaryID,
+#   #                     UnitaryBookValue, UnitaryCostBasis, UnitaryTaxBasis, UnrealizedGains)) %>%
+#   #     type_convert()
+#   # )
+#
+#   (security_data_cells <- security_data_rows %>%
+#       dplyr::mutate(sec_cols = security_nodeset %>% purrr::map(~ xml2::xml_children(.x)) %>% purrr::map(~ xml2::xml_name(.)),
+#              sec_vals = security_nodeset %>% purrr::map(~ xml2::xml_children(.x)) %>% purrr::map(~ xml2::xml_text(.)),
+#              sec_i = security_nodeset %>% purrr::map(~ xml2::xml_children(.x)) %>% purrr::map(~ seq_along(.))
+#       ) %>%
+#       dplyr::select(row, sec_cols, sec_vals, sec_i) %>%
+#       tidyr::unnest(cols = c(sec_cols, sec_vals, sec_i)) %>%
+#       tidyr::pivot_wider(names_from = sec_cols, values_from = sec_vals, id_cols = c(row)) %>%
+#       tidyr::unnest(cols = c(Currency, Dividends, EndingExchangeRate, Interest, OutstandingDividends,
+#                       OutstandingInterest, Quantity, SecurityID, SecurityPrimaryID,
+#                       UnitaryBookValue, UnitaryCostBasis, UnitaryTaxBasis, UnrealizedGains)) %>%
+#       readr::type_convert()
+#   )
+#
+#   # securities_df <- GetSecuritiesList(username, password, enterpriseID)
+#   # entities_df <- GetEntities(username, password, enterpriseID) %>% dplyr::select(EntityID, EntityName)
+#   # portfolios_df <- GetPortfolioList(username, password, enterpriseID) %>% dplyr::select(EntityID, PortfolioID, PortfolioName)
+#   #
+#
+#   positions_df <- dplyr::left_join(portfolio_data_cells, security_data_cells) %>%
+#     # dplyr::left_join(securities_df) %>%
+#     # dplyr::left_join(portfolios_df) %>%
+#     # dplyr::left_join(entities_df) %>%
+#     dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date()) %>%
+#     dplyr::select(-row)
 
 
   return(positions_df)
@@ -262,50 +259,46 @@ GetPositionsByEntity <- function(username, password, enterpriseID, EntityID, Sta
 
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
   file.remove(tmp_call)
-  positions_result <- Positions$content %>%
-    read_xml() %>% as_list()
 
-  positions_raw <- positions_result$Envelope$Body$GetPositionsResponse$GetPositionsResult$Entities
+  #######################################
 
-  positions_df <- dplyr::tibble(position = positions_raw) %>%
-    tidyr::unnest_wider(position) %>%
-    tidyr::unnest_longer(EntityID) %>%
-    tidyr::unnest_longer(Portfolios) %>%
-    tidyr::unnest_wider(Portfolios) %>%
-    tidyr::unnest_longer(Securities) %>%
-    tidyr::unnest_wider(Securities) %>%
-    tidyr::unnest_longer(BeginningCash) %>%
-    tidyr::unnest_longer(BeginningDueFrom) %>%
-    tidyr::unnest_longer(BeginningDueTo) %>%
-    tidyr::unnest_longer(BeginningInvestments) %>%
-    tidyr::unnest_longer(BeginningNestedCost) %>%
-    tidyr::unnest_longer(BeginningNestedDisparity) %>%
-    tidyr::unnest_longer(EndingCash) %>%
-    tidyr::unnest_longer(EndingDueFrom) %>%
-    tidyr::unnest_longer(EndingDueTo) %>%
-    tidyr::unnest_longer(EndingInvestments) %>%
-    tidyr::unnest_longer(EndingNestedCost) %>%
-    tidyr::unnest_longer(EndingNestedDisparity) %>%
-    tidyr::unnest_longer(PortfolioID) %>%
-    tidyr::unnest_longer(Quantity) %>%
-    tidyr::unnest_longer(RealizedGainsLongTerm) %>%
-    tidyr::unnest_longer(RealizedGainsShortTerm) %>%
-    tidyr::unnest_longer(Currency) %>%
-    tidyr::unnest_longer(Dividends) %>%
-    tidyr::unnest_longer(EndingExchangeRate) %>%
-    tidyr::unnest_longer(Interest) %>%
-    tidyr::unnest_longer(OutstandingDividends) %>%
-    tidyr::unnest_longer(OutstandingInterest) %>%
-    tidyr::unnest_longer(SecurityID) %>%
-    tidyr::unnest_longer(SecurityPrimaryID) %>%
-    tidyr::unnest_longer(UnitaryBookValue) %>%
-    tidyr::unnest_longer(UnitaryCostBasis) %>%
-    tidyr::unnest_longer(UnitaryTaxBasis) %>%
-    tidyr::unnest_longer(UnrealizedGains) %>%
-    dplyr::select(-`...1`) %>%
-    readr::type_convert() %>%
+  doc <- Positions$content %>%
+    xml2::read_xml()
+  (positions_data <- doc %>%
+     xml2::xml_find_all('.//b:GetPositionPortfolio', ns = xml2::xml_ns(doc)))
+
+  (positions_rows <- tibble(
+    row = seq_along(positions_data),
+    PortfolioID = map(.x = positions_data, ~ xml2::xml_find_all(.x, './/b:PortfolioID')) %>% map(~ xml_text(.x)),
+    Securities = map(.x = positions_data, ~ xml2::xml_find_all(.x, './/b:Securities'))
+  ) %>%
+      unnest(PortfolioID) %>%
+      mutate(GetPositionSecurity = map(.x = Securities, ~ xml2::xml_find_all(.x, './b:GetPositionSecurity'))) %>%
+      mutate(Currency = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Currency')) %>% map(~ xml_text(.x)),
+             Dividends = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Dividends')) %>% map(~ xml_text(.x)),
+             EndingExchangeRate = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:EndingExchangeRate')) %>% map(~ xml_text(.x)),
+             Interest = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Interest')) %>% map(~ xml_text(.x)),
+             OutstandingDividends = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:OutstandingDividends')) %>% map(~ xml_text(.x)),
+             OutstandingInterest = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:OutstandingInterest')) %>% map(~ xml_text(.x)),
+             Quantity = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:Quantity')) %>% map(~ xml_text(.x)),
+             SecurityID = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:SecurityID')) %>% map(~ xml_text(.x)),
+             SecurityPrimaryID = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:SecurityPrimaryID')) %>% map(~ xml_text(.x)),
+             UnitaryBookValue = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnitaryBookValue')) %>% map(~ xml_text(.x)),
+             UnitaryCostBasis = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnitaryCostBasis')) %>% map(~ xml_text(.x)),
+             UnitaryTaxBasis = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnitaryTaxBasis')) %>% map(~ xml_text(.x)),
+             UnrealizedGains = map(.x = GetPositionSecurity, ~ xml2::xml_find_all(.x, './b:UnrealizedGains')) %>% map(~ xml_text(.x))
+      ) %>%
+      select(-Securities, -GetPositionSecurity) %>%
+      unnest(cols = c(Currency, Dividends, EndingExchangeRate,
+                      Interest, OutstandingDividends, OutstandingInterest, Quantity,
+                      SecurityID, SecurityPrimaryID, UnitaryBookValue, UnitaryCostBasis,
+                      UnitaryTaxBasis, UnrealizedGains))
+  )
+
+  positions_df <- positions_rows %>%
+    dplyr::select(-row) %>%
     dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
-
+  #######################################
 
   return(positions_df)
 }
