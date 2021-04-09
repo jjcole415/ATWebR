@@ -177,6 +177,7 @@ GetGLTransactionsCodeBlockDetail <- function(username, password, enterpriseID, S
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
   file.remove(tmp_call)
 
+
   GLTrans_result <- GLTrans$content %>%
     read_xml() %>% as_list()
   GLTrans_list <- GLTrans_result$Envelope$Body$GetGLTransactionsResponse$GetGLTransactionsResult$GLTransactionsEntities
@@ -210,9 +211,10 @@ GetGLTransactionsCodeBlockDetail <- function(username, password, enterpriseID, S
       GLReconciled = col_logical(),
       GLCodeBlockName = col_character(),
       GLCodeBlockOptionCode = col_character(),
-      GLCodeBlockOptionName = col_character(),
-      GLTransactionCodeBlocks_id = col_character()
+      GLCodeBlockOptionName = col_character()
     ))
+
+
 
   return(GLTrans_df)
 }
