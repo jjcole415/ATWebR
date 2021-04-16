@@ -242,4 +242,5 @@ GetGLTransactionsCodeBlockDetail <- function(username, password, enterpriseID, S
   }
 
   return(GLTrans_df2)
+
 }
