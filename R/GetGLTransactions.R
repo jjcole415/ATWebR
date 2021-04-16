@@ -140,7 +140,8 @@ GetGLTransactions <- function(username, password, enterpriseID, StartDate, EndDa
       GLReconciled = col_logical(),
       GLRowID = col_double(),
       GLSecurityID = col_double()
-    ))
+    )) %>%
+    mutate(ts = Sys.time())
   return(GLTrans_df)
 }
 
@@ -171,39 +172,74 @@ GetGLTransactionsCodeBlockDetail <- function(username, password, enterpriseID, S
     read_xml() %>% as_list()
   GLTrans_list <- GLTrans_result$Envelope$Body$GetGLTransactionsResponse$GetGLTransactionsResult$GLTransactionsEntities
 
-  GLTrans_df <- tibble(GLTrans = GLTrans_list) %>%
+  GLTrans_df1 <- tibble(GLTrans = GLTrans_list) %>%
     unnest_wider(GLTrans) %>%
     unnest_longer(GLTransactions) %>%
     unnest_wider(GLTransactions) %>%
     unnest_longer(GLTransactionRows) %>%
-    unnest_wider(GLTransactionRows) %>%
-    unnest_longer(GLTransactionCodeBlocks) %>%
-    unnest_wider(GLTransactionCodeBlocks) %>%
-    select(-GLTransactionRows_id, -GLTransactions_id, -`...1`, -GLTransactionCodeBlocks_id) %>%
-    unnest(cols = c(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
-                    GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
-                    GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
-                    GLSecurityID, GLCodeBlockID, GLCodeBlockName, GLCodeBlockOptionCode,
-                    GLCodeBlockOptionID, GLCodeBlockOptionName, GLCodeBlockSequence)) %>%
-    unnest(cols = c(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
-                    GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
-                    GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
-                    GLSecurityID, GLCodeBlockID, GLCodeBlockName, GLCodeBlockOptionCode,
-                    GLCodeBlockOptionID, GLCodeBlockOptionName, GLCodeBlockSequence)) %>%
-    type_convert(cols(
-      .default = col_double(),
-      GLJournalDate = col_datetime(format = ""),
-      GLAccountName = col_character(),
-      GLCurrency = col_character(),
-      GLFunctionCode = col_character(),
-      GLNotes = col_character(),
-      GLReconciled = col_logical(),
-      GLCodeBlockName = col_character(),
-      GLCodeBlockOptionCode = col_character(),
-      GLCodeBlockOptionName = col_character()
-    ))
+    unnest_wider(GLTransactionRows)
+  if("GLTransactionCodeBlocks" %in% c(names(GLTrans_df1))) {
+    GLTrans_df2 <- GLTrans_df1 %>%
+      unnest_longer(GLTransactionCodeBlocks) %>%
+      unnest_wider(GLTransactionCodeBlocks) %>%
+      select(-GLTransactionRows_id, -GLTransactions_id, -`...1`, -GLTransactionCodeBlocks_id) %>%
+      unnest(cols = c(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
+                      GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
+                      GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
+                      GLSecurityID, GLCodeBlockID, GLCodeBlockName, GLCodeBlockOptionCode,
+                      GLCodeBlockOptionID, GLCodeBlockOptionName, GLCodeBlockSequence)) %>%
+      unnest(cols = c(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
+                      GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
+                      GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
+                      GLSecurityID, GLCodeBlockID, GLCodeBlockName, GLCodeBlockOptionCode,
+                      GLCodeBlockOptionID, GLCodeBlockOptionName, GLCodeBlockSequence)) %>%
+      type_convert(cols(
+        .default = col_double(),
+        GLJournalDate = col_datetime(format = ""),
+        GLAccountName = col_character(),
+        GLCurrency = col_character(),
+        GLFunctionCode = col_character(),
+        GLNotes = col_character(),
+        GLReconciled = col_logical(),
+        GLCodeBlockName = col_character(),
+        GLCodeBlockOptionCode = col_character(),
+        GLCodeBlockOptionName = col_character()
+      )) %>%
+      mutate(ts = Sys.time())
+  } else {
+    GLTrans_df2 <- GLTrans_df1 %>%
+      select(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
+           GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
+           GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
+           GLSecurityID) %>%
+      unnest(cols = c(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
+                      GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
+                      GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
+                      GLSecurityID)) %>%
+      unnest(cols = c(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
+                      GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
+                      GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
+                      GLSecurityID)) %>%
+      type_convert(cols(
+        EntityID = col_double(),
+        GLID = col_double(),
+        GLJournalDate = col_datetime(format = ""),
+        GLAccountCode = col_double(),
+        GLAccountName = col_character(),
+        GLCOAID = col_double(),
+        GLCreditAmount = col_double(),
+        GLCurrency = col_character(),
+        GLDebitAmount = col_double(),
+        GLExchangeRate = col_double(),
+        GLFunctionCode = col_character(),
+        GLNotes = col_character(),
+        GLPortfolioID = col_double(),
+        GLReconciled = col_logical(),
+        GLRowID = col_double(),
+        GLSecurityID = col_double()
+      )) %>%
+      mutate(ts = Sys.time())
+  }
 
-
-
-  return(GLTrans_df)
+  return(GLTrans_df2)
 }
