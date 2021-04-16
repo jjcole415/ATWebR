@@ -140,7 +140,8 @@ GetGLTransactions <- function(username, password, enterpriseID, StartDate, EndDa
       GLReconciled = col_logical(),
       GLRowID = col_double(),
       GLSecurityID = col_double()
-    ))
+    )) %>%
+    mutate(ts = Sys.time())
   return(GLTrans_df)
 }
 
@@ -171,12 +172,19 @@ GetGLTransactionsCodeBlockDetail <- function(username, password, enterpriseID, S
     read_xml() %>% as_list()
   GLTrans_list <- GLTrans_result$Envelope$Body$GetGLTransactionsResponse$GetGLTransactionsResult$GLTransactionsEntities
 
-  GLTrans_df <- tibble(GLTrans = GLTrans_list) %>%
+  GLTrans_df1 <- tibble(GLTrans = GLTrans_list) %>%
     unnest_wider(GLTrans) %>%
     unnest_longer(GLTransactions) %>%
     unnest_wider(GLTransactions) %>%
     unnest_longer(GLTransactionRows) %>%
-    unnest_wider(GLTransactionRows) %>%
+    unnest_wider(GLTransactionRows)
+  if(c(names(GLTrans_df1)) %in% c("GLTransactionCodeBlocks")) {
+
+  }
+
+  GLTrans_df2 <- GLTrans_df1
+
+  %>%
     unnest_longer(GLTransactionCodeBlocks) %>%
     unnest_wider(GLTransactionCodeBlocks) %>%
     select(-GLTransactionRows_id, -GLTransactions_id, -`...1`, -GLTransactionCodeBlocks_id) %>%
@@ -201,9 +209,8 @@ GetGLTransactionsCodeBlockDetail <- function(username, password, enterpriseID, S
       GLCodeBlockName = col_character(),
       GLCodeBlockOptionCode = col_character(),
       GLCodeBlockOptionName = col_character()
-    ))
-
-
+    )) %>%
+    mutate(ts = Sys.time())
 
   return(GLTrans_df)
 }
