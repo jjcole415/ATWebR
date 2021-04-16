@@ -147,6 +147,8 @@ GetPortfolioList <- function(username, password, enterpriseID){
 #' @export
 GetPortfolioClasses <- function(username, password, enterpriseID){
 
+  Portfolios <- GetPortfolioListRaw(username, password, enterpriseID)
+
   portfolios_result <- Portfolios$content %>%
     xml2::read_xml() %>% xml2::as_list()
   portfolios_list <- portfolios_result$Envelope$Body$GetPortfolioListResponse$GetPortfolioListResult$Entities
