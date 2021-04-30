@@ -1,8 +1,8 @@
 # GetSecurityValues ---------------------------------------------------------------------
 
-#' GetSecurityValues API Call
+#' GetSecurityValuesRaw API Call
 #'
-#' This function queries the Archway API for information from the Security Master for a given period
+#' This function queries the Archway API for information from the Security Master for a given period, in raw form
 #'
 #' @param username  Username for the API
 #' @param password  Password for the API
@@ -14,7 +14,7 @@
 #' @import xml2
 #' @import dplyr
 #' @export
-GetSecurityValues <- function(username, password, enterpriseID, StartDate = "1900-01-01", EndDate = Sys.Date()){
+GetSecurityValuesRaw <- function(username, password, enterpriseID, StartDate = "1900-01-01", EndDate = Sys.Date()){
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
   call <- ATWeb_Auth(username = username, password = password)
   UserID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
@@ -64,48 +64,93 @@ GetSecurityValues <- function(username, password, enterpriseID, StartDate = "190
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
   file.remove(tmp_call)
 
-  doc <- Pricing$content %>%
-    xml2::read_xml()
+  return(Pricing)
+}
 
-  (pricing_data <- doc %>%
-      xml2::xml_find_all('.//b:GetSecurity', ns = xml2::xml_ns(doc)))
+# GetSecurityValues ---------------------------------------------------------------------
 
-  (pricing_rows <- tibble(
-    row = seq_along(pricing_data),
-    SecurityID = pricing_data %>%  map(~ xml2::xml_find_all(.x, './/b:SecurityID', ns = xml2::xml_ns(doc))) %>% map(~ xml_text(.x)),
-    SecurityPrimaryID = pricing_data %>%  map(~ xml2::xml_find_all(.x, './/b:SecurityPrimaryID', ns = xml2::xml_ns(doc))) %>% map(~ xml_text(.x)),
-    SecurityValuesList = pricing_data %>%  map(~ xml2::xml_find_all(.x, './/b:GetSecurityValue', ns = xml2::xml_ns(doc))) %>% map(~ xml_children(.x)))
-  )
+#' GetSecurityValues API Call
+#'
+#' This function queries the Archway API for information from the Security Master for a given period
+#'
+#' @param username  Username for the API
+#' @param password  Password for the API
+#' @param enterpriseID  Enterprise ID
+#' @param StartDate  Date for beginning of period in yyyy-mm-dd format
+#' @param EndDate  Date for end of period in yyyy-mm-dd format
+#' @import tidyverse
+#' @import DBI
+#' @import xml2
+#' @import dplyr
+#' @export
+GetSecurityValues <- function(username, password, enterpriseID, StartDate = "1900-01-01", EndDate = Sys.Date()){
+  Pricing <- GetSecurityValuesRaw(username, password, enterpriseID, StartDate, EndDate)
 
-  (pricing_df <- pricing_rows %>%
-      dplyr::mutate(cols = SecurityValuesList %>% purrr::map(~ xml2::xml_name(.)),
-                    vals = SecurityValuesList %>% purrr::map(~ xml2::xml_text(.)),
-                    i = SecurityValuesList %>% purrr::map(~ seq_along(.))
-      ) %>%
-      dplyr::select(row, SecurityID, SecurityPrimaryID, cols, vals, i) %>%
-      tidyr::unnest(cols = c(SecurityID, SecurityPrimaryID, cols, vals, i)) %>%
-      tidyr::pivot_wider(names_from = cols, values_from = vals, id_cols = c(SecurityID, SecurityPrimaryID)) %>%
-      unnest(cols = c(PriceDate, PricePortfolioID, SecurityAnnualizedPayment, SecurityOutstandingShares,
-                      SecurityTradingVolume, SecurityValue1, SecurityValue2, SecurityValue3,
-                      SecurityValueNotes)) %>%
-      readr::type_convert(col_types = cols(
-        SecurityID = col_double(),
-        SecurityPrimaryID = col_character(),
-        PriceDate = col_datetime(format = ""),
-        PricePortfolioID = col_double(),
-        SecurityAnnualizedPayment = col_double(),
-        SecurityOutstandingShares = col_double(),
-        SecurityTradingVolume = col_double(),
-        SecurityValue1 = col_double(),
-        SecurityValue2 = col_double(),
-        SecurityValue3 = col_double(),
-        SecurityValueNotes = col_character()
-      )) %>%
-      replace_na(list(PricePortfolioID = 0, SecurityValue2 = 0, SecurityValue3 = 0, SecurityValueNotes = "")) %>%
-      dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
-  )
+  pricing_result <- Pricing$content %>%
+    xml2::read_xml() %>% as_list()
+  pricing_raw <- pricing_result$Envelope$Body$GetSecurityValuesResponse$GetSecurityValuesResult$Securities
+  pricing_df <- tibble(Securities = pricing_raw) %>%
+    unnest_wider(Securities) %>%
+    unnest_longer(SecurityValuesList) %>%
+    unnest_wider(SecurityValuesList) %>%
+    unnest(cols = c(SecurityID, SecurityPrimaryID, PriceDate, PricePortfolioID,
+                    SecurityValue1, SecurityValueNotes, SecurityValue2)) %>%
+    unnest(cols = c(SecurityID, SecurityPrimaryID, PriceDate, PricePortfolioID,
+                    SecurityValue1, SecurityValueNotes, SecurityValue2)) %>%
+    type_convert(cols(
+      SecurityID = col_double(),
+      SecurityPrimaryID = col_character(),
+      PriceDate = col_datetime(format = ""),
+      PricePortfolioID = col_double(),
+      SecurityValue1 = col_double(),
+      SecurityValueNotes = col_character(),
+      SecurityValue2 = col_double(),
+      SecurityValuesList_id = col_character()
+    ))
 
+
+  ################################################
+  # doc <- Pricing$content %>%
+  #   xml2::read_xml()
+  #
+  # (pricing_data <- doc %>%
+  #     xml2::xml_find_all('.//b:GetSecurity', ns = xml2::xml_ns(doc)))
+  #
+  # (pricing_rows <- tibble(
+  #   row = seq_along(pricing_data),
+  #   SecurityID = pricing_data %>%  map(~ xml2::xml_find_all(.x, './/b:SecurityID', ns = xml2::xml_ns(doc))) %>% map(~ xml_text(.x)),
+  #   SecurityPrimaryID = pricing_data %>%  map(~ xml2::xml_find_all(.x, './/b:SecurityPrimaryID', ns = xml2::xml_ns(doc))) %>% map(~ xml_text(.x)),
+  #   SecurityValuesList = pricing_data %>%  map(~ xml2::xml_find_all(.x, './/b:GetSecurityValue', ns = xml2::xml_ns(doc))) %>% map(~ xml_children(.x)))
+  # )
+  #
+  # (pricing_df <- pricing_rows %>%
+  #     dplyr::mutate(cols = SecurityValuesList %>% purrr::map(~ xml2::xml_name(.)),
+  #                   vals = SecurityValuesList %>% purrr::map(~ xml2::xml_text(.)),
+  #                   i = SecurityValuesList %>% purrr::map(~ seq_along(.))
+  #     ) %>%
+  #     dplyr::select(row, SecurityID, SecurityPrimaryID, cols, vals, i) %>%
+  #     tidyr::unnest(cols = c(SecurityID, SecurityPrimaryID, cols, vals, i)) %>%
+  #     tidyr::pivot_wider(names_from = cols, values_from = vals, id_cols = c(SecurityID, SecurityPrimaryID)) %>%
+  #     unnest(cols = c(PriceDate, PricePortfolioID, SecurityAnnualizedPayment, SecurityOutstandingShares,
+  #                     SecurityTradingVolume, SecurityValue1, SecurityValue2, SecurityValue3,
+  #                     SecurityValueNotes)) %>%
+  #     readr::type_convert(col_types = cols(
+  #       SecurityID = col_double(),
+  #       SecurityPrimaryID = col_character(),
+  #       PriceDate = col_datetime(format = ""),
+  #       PricePortfolioID = col_double(),
+  #       SecurityAnnualizedPayment = col_double(),
+  #       SecurityOutstandingShares = col_double(),
+  #       SecurityTradingVolume = col_double(),
+  #       SecurityValue1 = col_double(),
+  #       SecurityValue2 = col_double(),
+  #       SecurityValue3 = col_double(),
+  #       SecurityValueNotes = col_character()
+  #     )) %>%
+  #     replace_na(list(PricePortfolioID = 0, SecurityValue2 = 0, SecurityValue3 = 0, SecurityValueNotes = "")) %>%
+  #     dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
+  # )
+  ################################################
 
   return(pricing_df)
 }
-
