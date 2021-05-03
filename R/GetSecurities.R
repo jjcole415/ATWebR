@@ -181,6 +181,7 @@ GetSecuritiesList <- function(username, password, enterpriseID){
 #' @import purrr
 #' @export
 GetSecurityClasses <- function(username, password, enterpriseID){
+<<<<<<< HEAD
   Securities <- GetSecuritiesListRaw(username, password, enterpriseID)
 
   securities_list <- Securities$content %>%
@@ -228,6 +229,102 @@ GetSecurityClasses <- function(username, password, enterpriseID){
       SecurityClassOptionID = col_double()
     )) %>%
     select(-SecurityIdentifiers_id)
+||||||| c09c466
+  base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
+  call <- ATWeb_Auth(username = username, password = password)
+  UserID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
+  SessionID = stringr::str_extract(httr::content(call, as = "text"), "(?<=<b:SessionID>).+(?=</b:SessionID>)" )
+  UTC_time <-as.POSIXlt(Sys.time(), format = "%Y-%m-%d%H:%M:%S", tz = "UTC")
+  created <- UTC_time %>% as.character() %>% stringr::str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
+  ended <- (UTC_time + 600) %>% as.character() %>% stringr::str_replace(pattern = " ", replacement = "T") %>% paste0(".000Z")
+
+  GetSecuritiesList_body <- glue::glue(
+    '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+        	<s:Header>
+        		<a:Action s:mustUnderstand="1">http://www.atweb.us/ATWebAPI/IATWebWSAPI/GetSecuritiesList</a:Action>
+        		<a:ReplyTo>
+        			<a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>
+        		</a:ReplyTo>
+        		<a:To s:mustUnderstand="1">https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc</a:To>
+        		<o:Security s:mustUnderstand="1" xmlns:o="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+        			<u:Timestamp u:Id="_0">
+        				<u:Created>{created}</u:Created>
+        				<u:Expires>{ended}</u:Expires>
+        			</u:Timestamp>
+        			<o:UsernameToken u:Id="uuid-4ec07a4e-b63a-42e2-b8ab-76beb035c7fd-2">
+        				<o:Username>{UserID}</o:Username>
+        				<o:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">{SessionID}</o:Password>
+        			</o:UsernameToken>
+        		</o:Security>
+        	</s:Header>
+        	<s:Body>
+              <GetSecuritiesList xmlns="http://www.atweb.us/ATWebAPI">
+        			  <enterpriseID>{enterpriseID}</enterpriseID>
+        			  <entityIDs i:nil="true" xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"/>
+        		</GetSecuritiesList>
+        	</s:Body>
+        </s:Envelope>') %>%
+    xml2::read_xml()
+
+  tmp_call <- tempfile(fileext = ".xml")
+  write_xml(GetSecuritiesList_body, tmp_call, options = "format")
+
+  Securities <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
+                     body = httr::upload_file(tmp_call),
+                     httr::content_type('application/soap+xml; charset=utf-8'),
+                     httr::add_headers(Expect = "100-continue"), httr::verbose())
+
+  ATWeb_Logout(username = username, password = password, SessionID = SessionID)
+  file.remove(tmp_call)
+
+=======
+  Securities <- GetSecuritiesListRaw(username, password, enterpriseID)
+
+  securities_list <- Securities$content %>%
+    xml2::read_xml() %>%
+    as_list()
+
+  securities_result <- securities_list$Envelope$Body$GetSecuritiesListResponse$GetSecuritiesListResult$Securities
+
+  securities_df <- tibble(Securities = securities_result) %>%
+    unnest_wider(Securities) %>%
+    unnest_longer(SecurityIdentifiers) %>%
+    unnest_wider(SecurityIdentifiers) %>%
+    unnest_longer(SecurityClasses) %>%
+    unnest_wider(SecurityClasses) %>%
+    unnest_longer(SecurityClassOptions) %>%
+    select(-SecurityClasses_id, -SecurityClassOptions_id, -...1) %>%
+    unnest_wider(SecurityClassOptions) %>%
+    unnest(cols = c(CashOrEquivalent, NotionalValue, RecordIncomeAccruals, SecurityDefaultTransactionType,
+                    SecurityID, SecurityIdentifierName, SecurityIdentifierPrimary,
+                    SecurityIdentifierValue, SecurityMultiplier, SecurityName,
+                    SecurityReportingCurrency, SecurityType, SecurityTypeID,
+                    SecurityTypeName, SecurityClassCode, SecurityClassEffectiveDate,
+                    SecurityClassID, SecurityClassName, SecurityClassNotes, SecurityClassOptionCode,
+                    SecurityClassOptionID, SecurityClassOptionName, SecurityNotes)) %>%
+    unnest(cols = c(CashOrEquivalent, NotionalValue, RecordIncomeAccruals, SecurityDefaultTransactionType,
+                    SecurityID, SecurityIdentifierName, SecurityIdentifierPrimary,
+                    SecurityIdentifierValue, SecurityMultiplier, SecurityName,
+                    SecurityReportingCurrency, SecurityType, SecurityTypeID,
+                    SecurityTypeName, SecurityClassCode, SecurityClassEffectiveDate,
+                    SecurityClassID, SecurityClassName, SecurityClassNotes, SecurityClassOptionCode,
+                    SecurityClassOptionID, SecurityClassOptionName, SecurityNotes)) %>%
+    type_convert(cols(
+      .default = col_character(),
+      CashOrEquivalent = col_logical(),
+      NotionalValue = col_logical(),
+      RecordIncomeAccruals = col_logical(),
+      SecurityID = col_double(),
+      SecurityIdentifierPrimary = col_logical(),
+      SecurityMultiplier = col_double(),
+      SecurityType = col_double(),
+      SecurityTypeID = col_double(),
+      SecurityClassEffectiveDate = col_datetime(format = ""),
+      SecurityClassID = col_double(),
+      SecurityClassOptionCode = col_double(),
+      SecurityClassOptionID = col_double()
+    ))
+>>>>>>> 9ab7ddb8eadff99d9a15689acfd19e74fc947428
 
   #################################
   # doc <- Securities$content %>%
