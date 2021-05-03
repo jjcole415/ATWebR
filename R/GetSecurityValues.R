@@ -94,9 +94,9 @@ GetSecurityValues <- function(username, password, enterpriseID, StartDate = "190
     unnest_longer(SecurityValuesList) %>%
     unnest_wider(SecurityValuesList) %>%
     unnest(cols = c(SecurityID, SecurityPrimaryID, PriceDate, PricePortfolioID,
-                    SecurityValue1, SecurityValueNotes, SecurityValue2)) %>%
+                    SecurityValue1, SecurityValueNotes)) %>%
     unnest(cols = c(SecurityID, SecurityPrimaryID, PriceDate, PricePortfolioID,
-                    SecurityValue1, SecurityValueNotes, SecurityValue2)) %>%
+                    SecurityValue1, SecurityValueNotes)) %>%
     type_convert(cols(
       SecurityID = col_double(),
       SecurityPrimaryID = col_character(),
@@ -104,9 +104,11 @@ GetSecurityValues <- function(username, password, enterpriseID, StartDate = "190
       PricePortfolioID = col_double(),
       SecurityValue1 = col_double(),
       SecurityValueNotes = col_character(),
-      SecurityValue2 = col_double(),
       SecurityValuesList_id = col_character()
-    ))
+    )) %>%
+    select(SecurityID, SecurityPrimaryID, PriceDate, PricePortfolioID, SecurityValue1,
+           SecurityValueNotes) %>%
+    dplyr::mutate(UploadDate = Sys.time())
 
 
   ################################################
