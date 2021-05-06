@@ -154,7 +154,7 @@ GetEntities <- function(username, password, enterpriseID){
 GetEntityClasses <- function(username, password, enterpriseID){
   Entities <- GetEntitiesRaw(username, password, enterpriseID)
   entities_result <- Entities$content %>%
-    xml2::read_xml() %>% as_list()
+    xml2::read_xml() %>% xml2::as_list()
   entities_list <- entities_result$Envelope$Body$GetEntitiesListResponse$GetEntitiesListResult$Entities
   entities_df <- tidyr::tibble(entities = entities_list) %>%
     tidyr::unnest_wider(entities) %>%
@@ -171,8 +171,23 @@ GetEntityClasses <- function(username, password, enterpriseID){
                     EntityClassName, EntityClassNotes, EntityClassEffectiveDate,
                     EntityClassOptionID, EntityClassOptionName, EntityClassOptionCode,
                     EntityClassOptionNotes, EntityClassCode)) %>%
-    dplyr::select(EntityID, EntityName, EntityClassID, EntityClassName, EntityClassOptionID, EntityClassOptionName) %>%
-    readr::type_convert()
+    # dplyr::select(EntityID, EntityName, EntityClassID, EntityClassName, EntityClassOptionID, EntityClassOptionName) %>%
+    readr::type_convert(cols(
+      EntityID = col_double(),
+      EntityName = col_character(),
+      EntityClassAllowMultiple = col_logical(),
+      EntityClassID = col_double(),
+      EntityClassName = col_character(),
+      EntityClassNotes = col_character(),
+      EntityClassEffectiveDate = col_datetime(format = ""),
+      EntityClassOptionID = col_double(),
+      EntityClassOptionName = col_character(),
+      EntityClassOptionCode = col_character(),
+      EntityClassOptionNotes = col_character(),
+      EntityClassOptions_id = col_character(),
+      EntityClassCode = col_character(),
+      EntityClasses_id = col_character()
+    ))
 
   return(entities_df)
 }
