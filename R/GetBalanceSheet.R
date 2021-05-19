@@ -49,7 +49,7 @@ GetBalanceSheet <- function(username, password, enterpriseID, AsOfDate){
         <GetBalanceSheet xmlns="http://www.atweb.us/ATWebAPI">
         			<enterpriseID>{enterpriseID}</enterpriseID>
         			<entityIDs i:nil="true" xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"/>
-              <AsOfDate>{StartDate}</AsOfDate>
+              <AsOfDate>{AsOfDate}</AsOfDate>
         		</GetBalanceSheet>
         	</s:Body>
         </s:Envelope>') %>%
