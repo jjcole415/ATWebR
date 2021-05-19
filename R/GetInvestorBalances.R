@@ -13,6 +13,7 @@
 #' @import DBI
 #' @import xml2
 #' @import dplyr
+#' @import purrr
 #' @export
 
 GetInvestorBalances <- function(username, password, enterpriseID, StartDate, EndDate){
@@ -67,39 +68,34 @@ GetInvestorBalances <- function(username, password, enterpriseID, StartDate, End
 
   ############################################################################
 
-  doc <- InvestorBalances$content %>%
-    xml2::read_xml()
+  InvestorBalances_result <- InvestorBalances$content %>%
+    xml2::read_xml() %>% as_list()
 
-  (InvBal_data <- doc %>%
-      xml2::xml_find_all('.//b:Investor', ns = xml2::xml_ns(doc)))
+  InvestorBalances_list <- InvestorBalances_result$Envelope$Body$GetInvestorBalancesResponse$GetInvestorBalancesResult$Investors
 
-  (InvBal_rows <- tibble(
-    row = seq_along(InvBal_data),
-    EntityID = InvBal_data %>%  map(~ xml2::xml_find_all(.x, './/b:EntityID', ns = xml2::xml_ns(doc))) %>% map(~ xml_text(.x)),
-    InvestorBalance = InvBal_data %>%  map(~ xml2::xml_find_all(.x, './/b:InvestorBalance', ns = xml2::xml_ns(doc))) %>% map(~ xml_children(.x)))
-  )
-
-  (InvBal_df <- InvBal_rows %>%
-      dplyr::mutate(cols = InvestorBalance %>% purrr::map(~ xml2::xml_name(.)),
-                    vals = InvestorBalance %>% purrr::map(~ xml2::xml_text(.)),
-                    i = InvestorBalance %>% purrr::map(~ seq_along(.))
-      ) %>%
-      dplyr::select(row, EntityID, cols, vals, i) %>%
-      tidyr::unnest(cols = c(EntityID, cols, vals, i)) %>%
-      tidyr::pivot_wider(names_from = cols, values_from = vals, id_cols = c(EntityID)) %>%
+  (InvestorBalances_df <- tibble(Investors = InvestorBalances_list) %>%
+      unnest_wider(Investors) %>%
+      unnest_longer(InvestorBalances) %>%
+      unnest_wider(InvestorBalances) %>%
       unnest(cols = c(EntityID, InvestorAssociatedID, InvestorAssociatedIDType, InvestorBookAccount,
                       InvestorDisparityAccount, InvestorEquityAccountName, InvestorEquityAccountNumber,
                       InvestorNav, InvestorOwnershipPercent, InvestorTaxAccount,
                       InvestorUnits, ManagementFeesAccrued, ManagementFeesCharged,
                       PerformanceFeesAccrued, PerformanceFeesCharged)) %>%
-      readr::type_convert(cols(
-        EntityID = col_double(),
-        InvestorAssociatedID = col_double(),
+      unnest(cols = c(EntityID, InvestorAssociatedID, InvestorAssociatedIDType, InvestorBookAccount,
+                      InvestorDisparityAccount, InvestorEquityAccountName, InvestorEquityAccountNumber,
+                      InvestorNav, InvestorOwnershipPercent, InvestorTaxAccount,
+                      InvestorUnits, ManagementFeesAccrued, ManagementFeesCharged,
+                      PerformanceFeesAccrued, PerformanceFeesCharged)) %>%
+      select(-InvestorBalances_id) %>%
+      type_convert(cols(
+        EntityID = col_integer(),
+        InvestorAssociatedID = col_integer(),
         InvestorAssociatedIDType = col_character(),
         InvestorBookAccount = col_double(),
         InvestorDisparityAccount = col_double(),
         InvestorEquityAccountName = col_character(),
-        InvestorEquityAccountNumber = col_double(),
+        InvestorEquityAccountNumber = col_integer(),
         InvestorNav = col_double(),
         InvestorOwnershipPercent = col_double(),
         InvestorTaxAccount = col_double(),
@@ -108,11 +104,14 @@ GetInvestorBalances <- function(username, password, enterpriseID, StartDate, End
         ManagementFeesCharged = col_double(),
         PerformanceFeesAccrued = col_double(),
         PerformanceFeesCharged = col_double()
-      )) %>%
-      replace_na(list()) %>%
-      dplyr::mutate(StartDate = lubridate::as_date(StartDate), EndDate = lubridate::as_date(EndDate), UploadDate = Sys.Date())
+        )
+      ) %>%
+      mutate(StartDate = as_date(StartDate),
+             EndDate = as_date(EndDate),
+             UploadDate = Sys.time())
+
   )
 
-  return(InvBal_df)
+  return(InvestorBalances_df)
 
 }
