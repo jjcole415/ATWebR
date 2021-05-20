@@ -182,7 +182,11 @@ GetGLTransactionsCodeBlockDetail <- function(username, password, enterpriseID, S
     GLTrans_df2 <- GLTrans_df1 %>%
       unnest_longer(GLTransactionCodeBlocks) %>%
       unnest_wider(GLTransactionCodeBlocks) %>%
-      select(-GLTransactionRows_id, -GLTransactions_id, -`...1`, -GLTransactionCodeBlocks_id) %>%
+      select(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
+             GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
+             GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
+             GLSecurityID, GLCodeBlockID, GLCodeBlockName, GLCodeBlockOptionCode,
+             GLCodeBlockOptionID, GLCodeBlockOptionName, GLCodeBlockSequence) %>%
       unnest(cols = c(EntityID, GLID, GLJournalDate, GLAccountCode, GLAccountName,
                       GLCOAID, GLCreditAmount, GLCurrency, GLDebitAmount, GLExchangeRate,
                       GLFunctionCode, GLNotes, GLPortfolioID, GLReconciled, GLRowID,
