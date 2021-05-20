@@ -85,7 +85,7 @@ ATWeb_Logout <- function(username, password, SessionID){
 
   call <- httr::RETRY(verb = "POST",
                       url = glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
-                      body = httr::upload_file(tmp_auth),
+                      body = httr::upload_file(tmp_logout),
                       httr::content_type('application/soap+xml; charset=utf-8'),
                       httr::verbose(),
                       times = 3)
