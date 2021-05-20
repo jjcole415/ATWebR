@@ -35,10 +35,18 @@ ATWeb_Auth <- function(username, password) {
   tmp_auth <- tempfile(fileext = ".xml")
   xml2::write_xml(auth_request, tmp_auth, options = "format")
 
-  call <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
-               body = httr::upload_file(tmp_auth),
-               httr::content_type('application/soap+xml; charset=utf-8'),
-               httr::verbose())
+  call <- httr::RETRY(verb = "POST",
+                      url = glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
+                      body = httr::upload_file(tmp_auth),
+                      httr::content_type('application/soap+xml; charset=utf-8'),
+                      httr::verbose(),
+                      times = 3)
+
+  # call <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
+  #              body = httr::upload_file(tmp_auth),
+  #              httr::content_type('application/soap+xml; charset=utf-8'),
+  #              httr::verbose())
+
   file.remove(tmp_auth)
   return(call)
 }
@@ -75,10 +83,17 @@ ATWeb_Logout <- function(username, password, SessionID){
   tmp_logout <- tempfile(fileext = ".xml")
   xml2::write_xml(logout_body, tmp_logout, options = "format")
 
-  call <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
-               body = httr::upload_file(tmp_logout),
-               httr::content_type('application/soap+xml; charset=utf-8'),
-               httr::verbose())
+  call <- httr::RETRY(verb = "POST",
+                      url = glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
+                      body = httr::upload_file(tmp_auth),
+                      httr::content_type('application/soap+xml; charset=utf-8'),
+                      httr::verbose(),
+                      times = 3)
+
+  # call <- httr::POST(glue("https://{base_URL}/ATWebWSAPI/ATWebWSAuth.svc"),
+  #              body = httr::upload_file(tmp_auth),
+  #              httr::content_type('application/soap+xml; charset=utf-8'),
+  #              httr::verbose())
   file.remove(tmp_logout)
   return(call)
 }
