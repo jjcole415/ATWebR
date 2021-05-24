@@ -92,7 +92,6 @@ GetPositions <- function(username, password, enterpriseID, StartDate, EndDate){
   doc <- Positions$content %>%
     xml2::read_xml() %>% as_list()
 
-
   positions_list <- doc$Envelope$Body$GetPositionsResponse$GetPositionsResult$Entities
 
   positions_df <- tibble(Entities = positions_list) %>%
