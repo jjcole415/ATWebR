@@ -3,6 +3,8 @@
 export("%>%")
 export(ATWeb_Auth)
 export(ATWeb_Logout)
+export(GetAPBills)
+export(GetAPBillsRaw)
 export(GetBalanceSheet)
 export(GetEntities)
 export(GetEntitiesRaw)

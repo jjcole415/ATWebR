@@ -1,6 +1,6 @@
-#GetPortfolioTransactionsRaw-------------------------------------------------------------------------------------------
+#GetAPBillsRaw-------------------------------------------------------------------------------------------
 
-#' GetPortfolioTransactionsRaw API Call
+#' GetAPBillsRaw API Call
 #'
 #' This function queries the Archway API for information on Portfolio Transactions for a given period
 #' and returns xml
@@ -18,7 +18,7 @@
 #' @import glue
 #' @import tidyr
 #' @export
-GetPortfolioTransactionsRaw <- function(username, password, enterpriseID, StartDate, EndDate){
+GetAPBillsRaw <- function(username, password, enterpriseID, BillStartDate, BillEndDate){ # , PostStartDate = NULL, PostEndDate = NULL
   base_URL <- "archwayplatform.seic.com"    # changed from "www.atweb.us" 12/12/2020
   call <- ATWeb_Auth(username = username, password = password)
   UserID = stringr::str_extract(content(call, as = "text"), "(?<=<b:UserID>).+(?=</b:UserID>)" )
@@ -30,7 +30,7 @@ GetPortfolioTransactionsRaw <- function(username, password, enterpriseID, StartD
   call_body <- glue::glue(
     '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
         	<s:Header>
-        		<a:Action s:mustUnderstand="1">http://www.atweb.us/ATWebAPI/IATWebWSAPI/GetPortfolioTransactions</a:Action>
+        		<a:Action s:mustUnderstand="1">http://www.atweb.us/ATWebAPI/IATWebWSAPI/GetAPBills</a:Action>
         		<a:ReplyTo>
         			<a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>
         		</a:ReplyTo>
@@ -47,12 +47,12 @@ GetPortfolioTransactionsRaw <- function(username, password, enterpriseID, StartD
         		</o:Security>
         	</s:Header>
         	<s:Body>
-              <GetPortfolioTransactions xmlns="http://www.atweb.us/ATWebAPI">
+              <GetAPBills xmlns="http://www.atweb.us/ATWebAPI">
         			  <enterpriseID>{enterpriseID}</enterpriseID>
         			  <entityIDs i:nil="true" xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"/>
-                    <StartDate>{StartDate}</StartDate>
-                    <EndDate>{EndDate}</EndDate>
-        		</GetPortfolioTransactions>
+                    <vendorBillStartDate>{BillStartDate}</vendorBillStartDate>
+                    <vendorBillEndDate>{BillEndDate}</vendorBillEndDate>
+        		</GetAPBills>
         	</s:Body>
         </s:Envelope>') %>%
     read_xml()
@@ -61,18 +61,18 @@ GetPortfolioTransactionsRaw <- function(username, password, enterpriseID, StartD
   xml2::write_xml(call_body, tmp_call, options = "format")
 
   api_resp <- httr::POST(glue::glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
-                        body = httr::upload_file(tmp_call),
-                        httr::content_type('application/soap+xml; charset=utf-8'),
-                        httr::add_headers(Expect = "100-continue"), httr::verbose())
+                         body = httr::upload_file(tmp_call),
+                         httr::content_type('application/soap+xml; charset=utf-8'),
+                         httr::add_headers(Expect = "100-continue"), httr::verbose())
 
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
   file.remove(tmp_call)
 
-
   return(api_resp)
 }
 
-#' GetPortfolioTransactions API Call
+
+#' GetAPBills API Call
 #'
 #' This function queries the Archway API for information on Portfolio Transactions for a given period
 #' and returns xml
@@ -90,48 +90,39 @@ GetPortfolioTransactionsRaw <- function(username, password, enterpriseID, StartD
 #' @import glue
 #' @import tidyr
 #' @export
-GetPortfolioTransactions <- function(username, password, enterpriseID, StartDate, EndDate){
-  PortTrans <-  GetPortfolioTransactionsRaw(username, password, enterpriseID, StartDate, EndDate)
+GetAPBills <- function(username, password, enterpriseID, BillStartDate, BillEndDate){
+  APBills <-  GetAPBillsRaw(username, password, enterpriseID, BillStartDate, BillEndDate)
 
-  port_trans_result <- PortTrans$content %>%
+  apbills_result <- APBills$content %>%
     read_xml() %>% as_list()
-  port_trans_list <- port_trans_result$Envelope$Body$GetPortfolioTransactionsResponse$GetPortfolioTransactionsResult$Entities
-  port_trans_df <- tibble(Entities = port_trans_list) %>%
+  apbills_list <- apbills_result$Envelope$Body$GetAPBillsResponse$GetAPBillsResult$APBillEntities
+  apbills__df <- tibble(Entities = apbills_list) %>%
     unnest_wider(Entities) %>%
-    unnest_longer(Portfolios) %>%
-    unnest_wider(Portfolios) %>%
-    unnest_longer(Transactions) %>%
-    unnest_wider(Transactions) %>%
-    unnest(cols = c(EntityID, PortfolioID, BuySell, Commission, Commission2, Commission3,
-                    Commission4, Commission5, ContributionDate, Currency, DirectAssignUG,
-                    EffectiveYield, ExchangeRate, InKindTransaction, InKindUG,
-                    PurchasedAccruedInterest, Quantity, SecurityID, SecurityPrimaryID,
-                    SettleDate, SettleExchangeRate, SettleGLID, TotalCost, TradeDate,
-                    TradeGLID, UnitPrice, UnitaryAveragePrice, ReferenceCode)) %>%
-    unnest(cols = c(EntityID, PortfolioID, BuySell, Commission, Commission2, Commission3,
-                    Commission4, Commission5, ContributionDate, Currency, DirectAssignUG,
-                    EffectiveYield, ExchangeRate, InKindTransaction, InKindUG,
-                    PurchasedAccruedInterest, Quantity, SecurityID, SecurityPrimaryID,
-                    SettleDate, SettleExchangeRate, SettleGLID, TotalCost, TradeDate,
-                    TradeGLID, UnitPrice, UnitaryAveragePrice, ReferenceCode)) %>%
-    select(EntityID, PortfolioID, BuySell, Commission, Commission2, Commission3,
-           Commission4, Commission5, ContributionDate, Currency, DirectAssignUG,
-           EffectiveYield, ExchangeRate, InKindTransaction, InKindUG,
-           PurchasedAccruedInterest, Quantity, SecurityID, SecurityPrimaryID,
-           SettleDate, SettleExchangeRate, SettleGLID, TotalCost, TradeDate,
-           TradeGLID, UnitPrice, UnitaryAveragePrice, ReferenceCode) %>%
+    unnest_longer(APBills) %>%
+    select(-EntityID) %>%
+    unnest_wider(APBills) %>%
+    unnest_longer(APBillLines) %>%
+    select(-BillID) %>%
+    unnest_wider(APBillLines) %>%
+    unnest() %>%
+    unnest() %>%
     type_convert(cols(
       .default = col_double(),
       EntityID = col_integer(),
       PortfolioID = col_integer(),
       SecurityID = col_integer(),
-      BuySell = col_character(),
-      ContributionDate = col_datetime(format = ""),
-      Currency = col_character(),
-      InKindTransaction = col_logical(),
-      SecurityPrimaryID = col_character(),
-      SettleDate = col_datetime(format = ""),
-      TradeDate = col_datetime(format = ""),
-      ReferenceCode = col_character())) %>%
-    dplyr::mutate(StartDate = StartDate, EndDate = EndDate, UploadDate = Sys.time())
+      BillLineName = col_character(),
+      APBillLines_id = col_character(),
+      BillNumber = col_character(),
+      BillRecurrence = col_character(),
+      BillRecurring = col_logical(),
+      BillUnlimitedLife = col_logical(),
+      DueDate = col_datetime(format = ""),
+      Gift = col_logical(),
+      PostDate = col_datetime(format = ""),
+      VendorBillDate = col_datetime(format = ""),
+      BillNotes = col_character(),
+      BillAdditionalNotes = col_character(),
+      APBills_id = col_character()
+    ))
 }

@@ -94,7 +94,13 @@ GetPortfolioList <- function(username, password, enterpriseID){
     tidyr::unnest_longer(Portfolios) %>%
     tidyr::unnest_wider(Portfolios) %>%
     tidyr::unnest_wider(PrimaryAccountNumberList) %>%
-    dplyr::select(-PortfolioClasses, -...1) %>%
+    dplyr::select(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
+                  IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,
+                  PortfolioGLDueToDueFromAccount, PortfolioGLInvestmentAccount,
+                  PortfolioGLNestedEntityCostAccount, PortfolioGLNestedEntityDisparity,
+                  PortfolioGLNestedEntityProfitLoss, PortfolioID, PortfolioInventoryMethod,
+                  PortfolioName, string, PrimaryDataProvider, WashSales, PortfolioNotes,
+                  DateOpened, PortfolioLegalName, InternalIdentifier) %>%
     tidyr::unnest(cols = c(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
                            IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,
                            PortfolioGLDueToDueFromAccount, PortfolioGLInvestmentAccount,
@@ -109,7 +115,7 @@ GetPortfolioList <- function(username, password, enterpriseID){
                            PortfolioGLNestedEntityProfitLoss, PortfolioID, PortfolioInventoryMethod,
                            PortfolioName, string, PrimaryDataProvider, WashSales, PortfolioNotes,
                            DateOpened, PortfolioLegalName, InternalIdentifier))  %>%
-    dplyr::select(-Portfolios_id) %>%
+    # dplyr::select(-Portfolios_id) %>%
     readr::type_convert(cols(
       .default = col_double(),
       DefaultPortfolio = col_logical(),
