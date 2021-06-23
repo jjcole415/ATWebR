@@ -165,12 +165,10 @@ GetPortfolioClasses <- function(username, password, enterpriseID){
     tidyr::unnest_wider(Portfolios) %>%
     tidyr::unnest_longer(PortfolioClasses) %>%
     tidyr::unnest_wider(PortfolioClasses) %>%
-    dplyr::select(-...1) %>%
     tidyr::unnest_longer(PortfolioClassOptions) %>%
     tidyr::unnest_wider(PortfolioClassOptions) %>%
-    dplyr::select(-...1) %>%
     tidyr::unnest_wider(PrimaryAccountNumberList) %>%
-    dplyr::select(-...1, -Portfolios_id) %>%
+    dplyr::select(-Portfolios_id) %>%
     # dplyr::select(EntityID, PortfolioID, PortfolioName, PortfolioClassName, PortfolioClassID,  PortfolioClassCode, PortfolioClassOptionName) %>%
     tidyr::unnest(cols = c(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
                            IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,

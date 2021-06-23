@@ -196,7 +196,7 @@ GetSecurityClasses <- function(username, password, enterpriseID){
     unnest_longer(SecurityClasses) %>%
     unnest_wider(SecurityClasses) %>%
     unnest_longer(SecurityClassOptions) %>%
-    select(-SecurityClasses_id, -SecurityClassOptions_id, -...1) %>%
+    select(-SecurityClasses_id, -SecurityClassOptions_id) %>%
     unnest_wider(SecurityClassOptions) %>%
     unnest(cols = c(CashOrEquivalent, NotionalValue, RecordIncomeAccruals, SecurityDefaultTransactionType,
                     SecurityID, SecurityIdentifierName, SecurityIdentifierPrimary,
