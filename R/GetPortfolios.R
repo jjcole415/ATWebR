@@ -94,21 +94,21 @@ GetPortfolioList <- function(username, password, enterpriseID){
     tidyr::unnest_longer(Portfolios) %>%
     tidyr::unnest_wider(Portfolios) %>%
     tidyr::unnest_wider(PrimaryAccountNumberList) %>%
-    dplyr::select(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
+    dplyr::select(EntityID, DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
                   IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,
                   PortfolioGLDueToDueFromAccount, PortfolioGLInvestmentAccount,
                   PortfolioGLNestedEntityCostAccount, PortfolioGLNestedEntityDisparity,
                   PortfolioGLNestedEntityProfitLoss, PortfolioID, PortfolioInventoryMethod,
                   PortfolioName, string, PrimaryDataProvider, WashSales, PortfolioNotes,
                   DateOpened, PortfolioLegalName, InternalIdentifier) %>%
-    tidyr::unnest(cols = c(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
+    tidyr::unnest(cols = c(EntityID, DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
                            IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,
                            PortfolioGLDueToDueFromAccount, PortfolioGLInvestmentAccount,
                            PortfolioGLNestedEntityCostAccount, PortfolioGLNestedEntityDisparity,
                            PortfolioGLNestedEntityProfitLoss, PortfolioID, PortfolioInventoryMethod,
                            PortfolioName, string, PrimaryDataProvider, WashSales, PortfolioNotes,
                            DateOpened, PortfolioLegalName, InternalIdentifier)) %>%
-    tidyr::unnest(cols = c(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
+    tidyr::unnest(cols = c(EntityID, DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
                            IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,
                            PortfolioGLDueToDueFromAccount, PortfolioGLInvestmentAccount,
                            PortfolioGLNestedEntityCostAccount, PortfolioGLNestedEntityDisparity,
@@ -170,7 +170,7 @@ GetPortfolioClasses <- function(username, password, enterpriseID){
     tidyr::unnest_wider(PrimaryAccountNumberList) %>%
     dplyr::select(-Portfolios_id) %>%
     # dplyr::select(EntityID, PortfolioID, PortfolioName, PortfolioClassName, PortfolioClassID,  PortfolioClassCode, PortfolioClassOptionName) %>%
-    tidyr::unnest(cols = c(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
+    tidyr::unnest(cols = c(EntityID, DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
                            IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,
                            PortfolioGLDueToDueFromAccount, PortfolioGLInvestmentAccount,
                            PortfolioGLNestedEntityCostAccount, PortfolioGLNestedEntityDisparity,
@@ -180,7 +180,7 @@ GetPortfolioClasses <- function(username, password, enterpriseID){
                            PortfolioClassOptionID, PortfolioClassOptionName, PortfolioClassOptionCode,
                            PortfolioClassNotes, PortfolioNotes, DateOpened, PortfolioLegalName,
                            InternalIdentifier)) %>%
-    tidyr::unnest(cols = c(DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
+    tidyr::unnest(cols = c(EntityID, DefaultPortfolio, ExcludeFromDisplay, ExcludeFromRebalance,
                            IncomeOffsetNotional, PortfolioCurrency, PortfolioGLCashAccount,
                            PortfolioGLDueToDueFromAccount, PortfolioGLInvestmentAccount,
                            PortfolioGLNestedEntityCostAccount, PortfolioGLNestedEntityDisparity,
