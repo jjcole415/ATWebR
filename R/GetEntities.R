@@ -48,20 +48,22 @@ GetEntitiesRaw <- function(username, password, enterpriseID){
         			<entityIDs i:nil="true" xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"/>
         		</GetEntitiesList>
         	</s:Body>
-        </s:Envelope>') %>%
-    xml2::read_xml()
+        </s:Envelope>')
 
-  tmp_call <- tempfile(fileext = ".xml")
-  xml2::write_xml(GetEntities_body, tmp_call, options = "format")
+  # %>%
+  #   xml2::read_xml()
+  #
+  # tmp_call <- tempfile(fileext = ".xml")
+  # xml2::write_xml(GetEntities_body, tmp_call, options = "format")
 
   Entities <- httr::POST(glue::glue("https://{base_URL}/ATWebWSAPI/ATWebWSAPI.svc"),
-                         body = httr::upload_file(tmp_call),
+                         body = GetEntities_body, # httr::upload_file(tmp_call),
                          httr::content_type('application/soap+xml; charset=utf-8'),
                          httr::add_headers(Expect = "100-continue"),
                          httr::verbose())
 
   ATWeb_Logout(username = username, password = password, SessionID = SessionID)
-  file.remove(tmp_call)
+  # file.remove(tmp_call)
 
   return(Entities)
 }
